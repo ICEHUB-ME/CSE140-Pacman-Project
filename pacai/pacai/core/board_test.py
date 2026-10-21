@@ -3,7 +3,11 @@ import os
 
 import edq.testing.unittest
 
+<<<<<<< HEAD
 import pacai.pacai.core.board
+=======
+import pacai.core.board
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 
 class BoardTest(edq.testing.unittest.BaseTest):
     """
@@ -13,9 +17,15 @@ class BoardTest(edq.testing.unittest.BaseTest):
     def test_load_default_boards(self):
         """ Test that all the boards in the default board directory load. """
 
+<<<<<<< HEAD
         for path in glob.glob(os.path.join(pacai.pacai.core.board.BOARDS_DIR, '*.board')):
             with self.subTest(msg = path):
                 pacai.pacai.core.board.load_path(path)
+=======
+        for path in glob.glob(os.path.join(pacai.core.board.BOARDS_DIR, '*.board')):
+            with self.subTest(msg = path):
+                pacai.core.board.load_path(path)
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 
     def test_load_test_boards(self):
         """ Test that specially constructed boards load. """
@@ -49,7 +59,11 @@ class BoardTest(edq.testing.unittest.BaseTest):
             (text_board, error_substring) = test_case
             with self.subTest(msg = f"Case {i}:"):
                 try:
+<<<<<<< HEAD
                     pacai.pacai.core.board.load_string('test', text_board)
+=======
+                    pacai.core.board.load_string('test', text_board)
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
                 except Exception as ex:
                     if (error_substring is None):
                         self.fail(f"Unexpected error: '{str(ex)}'.")

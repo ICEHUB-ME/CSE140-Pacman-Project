@@ -9,6 +9,7 @@ import PIL.ImageDraw
 import PIL.ImageFont
 import edq.util.time
 
+<<<<<<< HEAD
 import pacai.pacai.core.action
 import pacai.pacai.core.board
 import pacai.pacai.core.font
@@ -16,6 +17,15 @@ import pacai.pacai.core.gamestate
 import pacai.pacai.core.spritesheet
 import pacai.pacai.util.alias
 import pacai.pacai.util.reflection
+=======
+import pacai.core.action
+import pacai.core.board
+import pacai.core.font
+import pacai.core.gamestate
+import pacai.core.spritesheet
+import pacai.util.alias
+import pacai.util.reflection
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 
 DEFAULT_FPS: int = 15
 
@@ -31,6 +41,7 @@ ANIMATION_KEY: str = 'UI.draw_image'
 ANIMATION_EXTS: list[str] = ['.gif', '.webp']
 """ The allowed extensions for animation files. """
 
+<<<<<<< HEAD
 WASD_CHAR_MAPPING: dict[str, pacai.pacai.core.action.Action] = {
     'w': pacai.pacai.core.action.NORTH,
     'W': pacai.pacai.core.action.NORTH,
@@ -76,6 +87,53 @@ ARROW_CHAR_MAPPING: dict[str, pacai.pacai.core.action.Action] = {
 """ A character to action mapping using the arrow keys. """
 
 DUAL_CHAR_MAPPING: dict[str, pacai.pacai.core.action.Action] = WASD_CHAR_MAPPING | ARROW_CHAR_MAPPING
+=======
+WASD_CHAR_MAPPING: dict[str, pacai.core.action.Action] = {
+    'w': pacai.core.action.NORTH,
+    'W': pacai.core.action.NORTH,
+    'ArrowUp': pacai.core.action.NORTH,
+
+    'a': pacai.core.action.WEST,
+    'A': pacai.core.action.WEST,
+    'ArrowLeft': pacai.core.action.WEST,
+
+    's': pacai.core.action.SOUTH,
+    'S': pacai.core.action.SOUTH,
+    'ArrowDown': pacai.core.action.SOUTH,
+
+    'd': pacai.core.action.EAST,
+    'D': pacai.core.action.EAST,
+    'ArrowRight': pacai.core.action.EAST,
+
+    ' ': pacai.core.action.STOP,
+    'space': pacai.core.action.STOP,
+    'Space': pacai.core.action.STOP,
+    'SPACE': pacai.core.action.STOP,
+}
+""" A character to action mapping using the common WASD scheme. """
+
+ARROW_CHAR_MAPPING: dict[str, pacai.core.action.Action] = {
+    'Up': pacai.core.action.NORTH,
+    'ArrowUp': pacai.core.action.NORTH,
+
+    'Left': pacai.core.action.WEST,
+    'ArrowLeft': pacai.core.action.WEST,
+
+    'Down': pacai.core.action.SOUTH,
+    'ArrowDown': pacai.core.action.SOUTH,
+
+    'Right': pacai.core.action.EAST,
+    'ArrowRight': pacai.core.action.EAST,
+
+    ' ': pacai.core.action.STOP,
+    'space': pacai.core.action.STOP,
+    'Space': pacai.core.action.STOP,
+    'SPACE': pacai.core.action.STOP,
+}
+""" A character to action mapping using the arrow keys. """
+
+DUAL_CHAR_MAPPING: dict[str, pacai.core.action.Action] = WASD_CHAR_MAPPING | ARROW_CHAR_MAPPING
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 """ A character to action mapping that uses both WASD_CHAR_MAPPING and ARROW_CHAR_MAPPING. """
 
 class UserInputDevice(abc.ABC):
@@ -85,7 +143,11 @@ class UserInputDevice(abc.ABC):
     """
 
     @abc.abstractmethod
+<<<<<<< HEAD
     def get_inputs(self) -> list[pacai.pacai.core.action.Action]:
+=======
+    def get_inputs(self) -> list[pacai.core.action.Action]:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         """
         Get any inputs that have occurred since the last call to this method.
         This method is responsible for not returning the same input instance in subsequent calls.
@@ -109,7 +171,11 @@ class UI(abc.ABC):
             animation_fps: int = DEFAULT_ANIMATION_FPS,
             animation_skip_frames: int = DEFAULT_ANIMATION_SKIP_FRAMES,
             sprite_sheet_path: str = DEFAULT_SPRITE_SHEET,
+<<<<<<< HEAD
             font_path: str = pacai.pacai.core.font.DEFAULT_FONT_PATH,
+=======
+            font_path: str = pacai.core.font.DEFAULT_FONT_PATH,
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
             **kwargs: typing.Any) -> None:
         self._user_input_device: UserInputDevice | None = user_input_device
         """ The device to use to get user input. """
@@ -164,6 +230,7 @@ class UI(abc.ABC):
         sprite_sheet = None
         fonts = {}
         if (self.requires_sprites() or (self._animation_path is not None)):
+<<<<<<< HEAD
             sprite_sheet = pacai.pacai.core.spritesheet.load(sprite_sheet_path)
 
             for font_size in pacai.pacai.core.font.FontSize:
@@ -173,11 +240,23 @@ class UI(abc.ABC):
         """ The sprite sheet to use for this UI. """
 
         self._fonts: dict[pacai.pacai.core.font.FontSize, PIL.ImageFont.FreeTypeFont] = fonts
+=======
+            sprite_sheet = pacai.core.spritesheet.load(sprite_sheet_path)
+
+            for font_size in pacai.core.font.FontSize:
+                fonts[font_size] = PIL.ImageFont.truetype(font_path, int(sprite_sheet.height * font_size.value))
+
+        self._sprite_sheet: pacai.core.spritesheet.SpriteSheet | None = sprite_sheet
+        """ The sprite sheet to use for this UI. """
+
+        self._fonts: dict[pacai.core.font.FontSize, PIL.ImageFont.FreeTypeFont] = fonts
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         """ The available fonts indexed by size. """
 
         self._image_cache: dict[int, PIL.Image.Image] = {}
         """ Cache images (by game state turn count) to avoid redrawing images. """
 
+<<<<<<< HEAD
         self._highlights: dict[pacai.pacai.core.board.Position, float] = {}
         """ The current set of board highlights. """
 
@@ -185,6 +264,15 @@ class UI(abc.ABC):
             state: pacai.pacai.core.gamestate.GameState,
             force_draw_image: bool = False,
             board_highlights: list[pacai.pacai.core.board.Highlight] | None = None,
+=======
+        self._highlights: dict[pacai.core.board.Position, float] = {}
+        """ The current set of board highlights. """
+
+    def update(self,
+            state: pacai.core.gamestate.GameState,
+            force_draw_image: bool = False,
+            board_highlights: list[pacai.core.board.Highlight] | None = None,
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
             ) -> None:
         """
         Update the UI with the current state of the game.
@@ -212,16 +300,26 @@ class UI(abc.ABC):
         self._update_count += 1
 
     def game_start(self,
+<<<<<<< HEAD
             initial_state: pacai.pacai.core.gamestate.GameState,
             board_highlights: list[pacai.pacai.core.board.Highlight] | None = None,
+=======
+            initial_state: pacai.core.gamestate.GameState,
+            board_highlights: list[pacai.core.board.Highlight] | None = None,
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
             ) -> None:
         """ Initialize the UI with the game's initial state. """
 
         self.update(initial_state, board_highlights = board_highlights, force_draw_image = True)
 
     def game_complete(self,
+<<<<<<< HEAD
             final_state: pacai.pacai.core.gamestate.GameState,
             board_highlights: list[pacai.pacai.core.board.Highlight] | None = None,
+=======
+            final_state: pacai.core.gamestate.GameState,
+            board_highlights: list[pacai.core.board.Highlight] | None = None,
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
             ) -> None:
         """ Update the UI with the game's final state. """
 
@@ -297,7 +395,11 @@ class UI(abc.ABC):
         if (self._user_input_device is not None):
             self._user_input_device.close()
 
+<<<<<<< HEAD
     def get_user_inputs(self) -> list[pacai.pacai.core.action.Action]:
+=======
+    def get_user_inputs(self) -> list[pacai.core.action.Action]:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         """
         If a user input device is available,
         get the inputs via UserInputDevice.get_inputs().
@@ -309,7 +411,11 @@ class UI(abc.ABC):
 
         return self._user_input_device.get_inputs()
 
+<<<<<<< HEAD
     def draw_image(self, state: pacai.pacai.core.gamestate.GameState, **kwargs: typing.Any) -> PIL.Image.Image:
+=======
+    def draw_image(self, state: pacai.core.gamestate.GameState, **kwargs: typing.Any) -> PIL.Image.Image:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         """
         Visualize the state of the game as an image.
         This method is typically used for rendering the game to an animation.
@@ -330,7 +436,11 @@ class UI(abc.ABC):
         # Draw highlights.
         for (position, base_intensity) in self._highlights.items():
             start_coord = self._position_to_image_coords(position)
+<<<<<<< HEAD
             end_coord = self._position_to_image_coords(position.add(pacai.pacai.core.board.Position(1, 1)))
+=======
+            end_coord = self._position_to_image_coords(position.add(pacai.core.board.Position(1, 1)))
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 
             # Don't let the intensity go to zero.
             intensity = 0.10 + (0.9 * base_intensity)
@@ -374,7 +484,11 @@ class UI(abc.ABC):
         # Draw the footer (usually the score).
         footer_text = state.get_footer_text()
         if (footer_text is not None):
+<<<<<<< HEAD
             (base_x, base_y) = self._position_to_image_coords(pacai.pacai.core.board.Position(state.board.height, 0))
+=======
+            (base_x, base_y) = self._position_to_image_coords(pacai.core.board.Position(state.board.height, 0))
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
             self._draw_text(footer_text, base_x, base_y, canvas)
 
         # Store this image in the cache.
@@ -382,14 +496,22 @@ class UI(abc.ABC):
 
         return image
 
+<<<<<<< HEAD
     def _get_font(self, size: pacai.pacai.core.font.FontSize) -> PIL.ImageFont.FreeTypeFont:
+=======
+    def _get_font(self, size: pacai.core.font.FontSize) -> PIL.ImageFont.FreeTypeFont:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         font = self._fonts.get(size, None)
         if (font is None):
             raise ValueError("Font has not been loaded.")
 
         return font
 
+<<<<<<< HEAD
     def _get_static_image(self, state: pacai.pacai.core.gamestate.GameState, **kwargs: typing.Any) -> PIL.Image.Image:
+=======
+    def _get_static_image(self, state: pacai.core.gamestate.GameState, **kwargs: typing.Any) -> PIL.Image.Image:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         """
         Get the base image that only contains static objects.
         This method will handle caching the base static image.
@@ -416,11 +538,19 @@ class UI(abc.ABC):
 
         # Draw wall markers.
         for position in state.board.get_walls():
+<<<<<<< HEAD
             if (state.skip_draw(pacai.pacai.core.board.MARKER_WALL, position, static = True)):
                 continue
 
             adjacency = state.board.get_adjacent_walls(position)
             sprite = self._get_sprite(state, position, marker = pacai.pacai.core.board.MARKER_WALL, adjacency = adjacency, animation_key = ANIMATION_KEY)
+=======
+            if (state.skip_draw(pacai.core.board.MARKER_WALL, position, static = True)):
+                continue
+
+            adjacency = state.board.get_adjacent_walls(position)
+            sprite = self._get_sprite(state, position, marker = pacai.core.board.MARKER_WALL, adjacency = adjacency, animation_key = ANIMATION_KEY)
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
             self._place_sprite(position, sprite, image)
 
         # Draw an additional static markers.
@@ -440,7 +570,11 @@ class UI(abc.ABC):
 
         return image
 
+<<<<<<< HEAD
     def _draw_position_text(self, board_texts: list[pacai.pacai.core.font.BoardText], image: PIL.Image.Image) -> None:
+=======
+    def _draw_position_text(self, board_texts: list[pacai.core.font.BoardText], image: PIL.Image.Image) -> None:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         """ Draw text on a board position. """
 
         if (len(board_texts) == 0):
@@ -454,7 +588,11 @@ class UI(abc.ABC):
             self._draw_text(board_text, base_x, base_y, canvas)
 
     def _draw_text(self,
+<<<<<<< HEAD
             text: pacai.pacai.core.font.Text,
+=======
+            text: pacai.core.font.Text,
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
             base_x: int, base_y: int,
             canvas: PIL.ImageDraw.ImageDraw,
             ) -> None:
@@ -479,7 +617,11 @@ class UI(abc.ABC):
                 anchor = text.anchor,
                 align = 'center')
 
+<<<<<<< HEAD
     def _get_sprite(self, state: pacai.pacai.core.gamestate.GameState, position: pacai.pacai.core.board.Position, **kwargs: typing.Any) -> PIL.Image.Image:
+=======
+    def _get_sprite(self, state: pacai.core.gamestate.GameState, position: pacai.core.board.Position, **kwargs: typing.Any) -> PIL.Image.Image:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         """ Get the requested sprite. """
 
         if (self._sprite_sheet is None):
@@ -487,7 +629,11 @@ class UI(abc.ABC):
 
         return state.sprite_lookup(self._sprite_sheet, position, **kwargs)
 
+<<<<<<< HEAD
     def _place_sprite(self, position: pacai.pacai.core.board.Position, sprite: PIL.Image.Image, image: PIL.Image.Image) -> None:
+=======
+    def _place_sprite(self, position: pacai.core.board.Position, sprite: PIL.Image.Image, image: PIL.Image.Image) -> None:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         image_coordinates = self._position_to_image_coords(position)
 
         # Overlay the sprite onto the image.
@@ -495,7 +641,11 @@ class UI(abc.ABC):
         # (so the transparent parts will not get drawn).
         image.paste(sprite, image_coordinates, sprite)
 
+<<<<<<< HEAD
     def _position_to_image_coords(self, position: pacai.pacai.core.board.Position) -> tuple[int, int]:
+=======
+    def _position_to_image_coords(self, position: pacai.core.board.Position) -> tuple[int, int]:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         """
         Get the image coordinates (in pixels) for this position.
         Returns: (x, y).
@@ -507,7 +657,11 @@ class UI(abc.ABC):
         return self._sprite_sheet.position_to_pixels(position)
 
     @abc.abstractmethod
+<<<<<<< HEAD
     def draw(self, state: pacai.pacai.core.gamestate.GameState, **kwargs: typing.Any) -> None:
+=======
+    def draw(self, state: pacai.core.gamestate.GameState, **kwargs: typing.Any) -> None:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
         """
         Visualize the state of the game to the UI.
         This is the typically the main override point for children.
@@ -526,6 +680,7 @@ def set_cli_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """
 
     parser.add_argument('--ui', dest = 'ui',
+<<<<<<< HEAD
             action = 'store', type = str, default = pacai.pacai.util.alias.UI_WEB.short,
             help = ('Set the UI/graphics to use (default: %(default)s).'
                     + ' Builtin options:'
@@ -536,6 +691,18 @@ def set_cli_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
                     + f' `{pacai.pacai.util.alias.UI_TK.short}` (`{pacai.pacai.util.alias.UI_TK.long}`)'
                     +       ' -- Use Tk/tkinter (must already be installed) to open a window,'
                     + f' `{pacai.pacai.util.alias.UI_WEB.short}` (`{pacai.pacai.util.alias.UI_WEB.long}`)'
+=======
+            action = 'store', type = str, default = pacai.util.alias.UI_WEB.short,
+            help = ('Set the UI/graphics to use (default: %(default)s).'
+                    + ' Builtin options:'
+                    + f' `{pacai.util.alias.UI_NULL.short}` (`{pacai.util.alias.UI_NULL.long}`)'
+                    +       ' -- Do not show any ui/graphics (best if you want to run fast and just need the result),'
+                    + f' `{pacai.util.alias.UI_STDIO.short}` (`{pacai.util.alias.UI_STDIO.long}`)'
+                    +       ' -- Use stdin/stdout from the terminal,'
+                    + f' `{pacai.util.alias.UI_TK.short}` (`{pacai.util.alias.UI_TK.long}`)'
+                    +       ' -- Use Tk/tkinter (must already be installed) to open a window,'
+                    + f' `{pacai.util.alias.UI_WEB.short}` (`{pacai.util.alias.UI_WEB.long}`)'
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
                     +       ' -- Launch a browser window (default).'))
 
     parser.add_argument('--show-training-ui', dest = 'show_training_ui',
@@ -604,9 +771,15 @@ def init_from_args(
     for i in range(num_uis):
         ui_name = args.ui
         if (i < null_out_uis):
+<<<<<<< HEAD
             ui_name = pacai.pacai.util.alias.UI_NULL.long
 
         uis.append(pacai.pacai.util.reflection.new_object(ui_name, **ui_args))
+=======
+            ui_name = pacai.util.alias.UI_NULL.long
+
+        uis.append(pacai.util.reflection.new_object(ui_name, **ui_args))
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 
     setattr(args, '_uis', uis)
 

@@ -1,9 +1,15 @@
 import enum
 import typing
 
+<<<<<<< HEAD
 import pacai.pacai.core.isolation.isolator
 import pacai.pacai.core.isolation.none
 import pacai.pacai.core.isolation.process
+=======
+import pacai.core.isolation.isolator
+import pacai.core.isolation.none
+import pacai.core.isolation.process
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 
 class Level(enum.Enum):
     """ An enum representing the different isolation levels supported by the engine. """
@@ -11,6 +17,7 @@ class Level(enum.Enum):
     NONE = 'none'
     PROCESS = 'process'
 
+<<<<<<< HEAD
     def get_isolator(self, **kwargs: typing.Any) -> pacai.pacai.core.isolation.isolator.AgentIsolator:
         """ Get an isolator matching the given level. """
 
@@ -20,6 +27,17 @@ class Level(enum.Enum):
             isolator = pacai.pacai.core.isolation.none.NoneIsolator(**kwargs)
         elif (self == Level.PROCESS):
             isolator = pacai.pacai.core.isolation.process.ProcessIsolator(**kwargs)
+=======
+    def get_isolator(self, **kwargs: typing.Any) -> pacai.core.isolation.isolator.AgentIsolator:
+        """ Get an isolator matching the given level. """
+
+        isolator: pacai.core.isolation.isolator.AgentIsolator | None = None
+
+        if (self == Level.NONE):
+            isolator = pacai.core.isolation.none.NoneIsolator(**kwargs)
+        elif (self == Level.PROCESS):
+            isolator = pacai.core.isolation.process.ProcessIsolator(**kwargs)
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 
         if (isolator is None):
             raise ValueError(f"Unknown isolation level '{self}'.")

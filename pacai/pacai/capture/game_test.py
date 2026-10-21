@@ -3,9 +3,15 @@ import os
 import edq.testing.unittest
 import edq.util.dirent
 
+<<<<<<< HEAD
 import pacai.pacai.capture.bin
 import pacai.pacai.core.agentinfo
 import pacai.pacai.util.alias
+=======
+import pacai.capture.bin
+import pacai.core.agentinfo
+import pacai.util.alias
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 
 THIS_PATH: str = os.path.realpath(__file__)
 
@@ -32,7 +38,11 @@ class GameTest(edq.testing.unittest.BaseTest):
             '--save-path', replay_path,
 
         ]
+<<<<<<< HEAD
         _, results = pacai.pacai.capture.bin.main(argv = argv)
+=======
+        _, results = pacai.capture.bin.main(argv = argv)
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 
         self.assertEqual(expected_score, results[0].score)
 
@@ -43,7 +53,11 @@ class GameTest(edq.testing.unittest.BaseTest):
             '--replay-path', replay_path,
 
         ]
+<<<<<<< HEAD
         _, results = pacai.pacai.capture.bin.main(argv = argv)
+=======
+        _, results = pacai.capture.bin.main(argv = argv)
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
 
         self.assertEqual(expected_score, results[0].score)
 
@@ -62,20 +76,37 @@ class GameTest(edq.testing.unittest.BaseTest):
             '--ui', 'null',
             '--max-turns', '100',
         ]
+<<<<<<< HEAD
         _, results = pacai.pacai.capture.bin.main(argv = argv)
 
         self.assertEqual(expected_score, results[0].score)
 
 def _create_team_movedelay() -> list[pacai.pacai.core.agentinfo.AgentInfo]:
+=======
+        _, results = pacai.capture.bin.main(argv = argv)
+
+        self.assertEqual(expected_score, results[0].score)
+
+def _create_team_movedelay() -> list[pacai.core.agentinfo.AgentInfo]:
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
     """
     Create a team that tries to override its own move delay.
     """
 
     return [
+<<<<<<< HEAD
         pacai.pacai.core.agentinfo.AgentInfo(name = pacai.pacai.util.alias.AGENT_CAPTURE_OFFENSIVE.long, move_delay = 10),
         pacai.pacai.core.agentinfo.AgentInfo(name = pacai.pacai.util.alias.AGENT_CAPTURE_DEFENSIVE.long, move_delay = 10),
         pacai.pacai.core.agentinfo.AgentInfo(name = pacai.pacai.util.alias.AGENT_CAPTURE_OFFENSIVE.long, move_delay = 10),
         pacai.pacai.core.agentinfo.AgentInfo(name = pacai.pacai.util.alias.AGENT_CAPTURE_DEFENSIVE.long, move_delay = 10),
         pacai.pacai.core.agentinfo.AgentInfo(name = pacai.pacai.util.alias.AGENT_CAPTURE_OFFENSIVE.long, move_delay = 10),
         pacai.pacai.core.agentinfo.AgentInfo(name = pacai.pacai.util.alias.AGENT_CAPTURE_DEFENSIVE.long, move_delay = 10),
+=======
+        pacai.core.agentinfo.AgentInfo(name = pacai.util.alias.AGENT_CAPTURE_OFFENSIVE.long, move_delay = 10),
+        pacai.core.agentinfo.AgentInfo(name = pacai.util.alias.AGENT_CAPTURE_DEFENSIVE.long, move_delay = 10),
+        pacai.core.agentinfo.AgentInfo(name = pacai.util.alias.AGENT_CAPTURE_OFFENSIVE.long, move_delay = 10),
+        pacai.core.agentinfo.AgentInfo(name = pacai.util.alias.AGENT_CAPTURE_DEFENSIVE.long, move_delay = 10),
+        pacai.core.agentinfo.AgentInfo(name = pacai.util.alias.AGENT_CAPTURE_OFFENSIVE.long, move_delay = 10),
+        pacai.core.agentinfo.AgentInfo(name = pacai.util.alias.AGENT_CAPTURE_DEFENSIVE.long, move_delay = 10),
+>>>>>>> 9210d7a4f18942b03f809a79ef2f1eca77dc98c3
     ]
