@@ -28,8 +28,40 @@ class ReflexAgent(pacai.agents.greedy.GreedyAgent):
             state: pacai.core.gamestate.GameState,
             action: pacai.core.action.Action | None = None,
             **kwargs: typing.Any) -> float:
-        # This would be a great place to improve your reflex agent.
-        return super().evaluate_state(state, action)
+        # Start with the game score, so eating pellets and winning still matter.
+        pos = state.get_agent_position(0)
+        if pos is None:
+            return state.score - 1000.0
+
+        value = float(state.score)
+
+        # Reward being closer to the nearest remaining pellet.
+        foods = state.get_food()
+
+        if foods:
+            nearest_food = min(
+                abs(pos.row - food.row) + abs(pos.col - food.col)
+                for food in foods
+            )
+            value += 4.0 / (nearest_food + 1.0)
+
+        # Penalize being near an unscared ghost; reward approaching a scared ghost.
+        for ghost_index, ghost_pos in state.get_ghost_positions().items():
+            distance = abs(pos.row - ghost_pos.row) + abs(pos.col - ghost_pos.col)
+
+            if state.is_scared(ghost_index):
+                value += 3.0 / (distance + 1.0)
+            elif distance == 0:
+                value -= 1000.0
+            elif distance <= 3:
+                value -= 12.0 / distance
+
+        # Penalize returning to recently visited positions to reduce back-and-forth movement.
+        recent_positions = self.last_positions[-5:]
+        repeats = sum(1 for old_pos in recent_positions if old_pos == pos)
+        value -= 2.0 * repeats
+
+        return value
 
 class MyMinimaxLikeAgent(pacai.agents.minimax.MinimaxLikeAgent):
     """
@@ -61,7 +93,24 @@ class MyMinimaxLikeAgent(pacai.agents.minimax.MinimaxLikeAgent):
             beta: float,
             ) -> tuple[list[pacai.core.action.Action], float]:
         # *** Your Code Here ***
-        return super().minimax_step_max(state, ply_count, legal_actions, alpha, beta)
+        best_score = float("-inf")
+        best_actions = []
+
+        for action in legal_actions:
+            successor = state.generate_successor(action, self.rng)
+            _, score = self.minimax_step(successor, ply_count, alpha, beta)
+
+            if score > best_score:
+                best_score = score
+                best_actions = [action]
+            elif score == best_score:
+                best_actions.append(action)
+
+            alpha = max(alpha, best_score)
+            if alpha >= beta:
+                break
+            
+        return best_actions, best_score
 
     def minimax_step_min(self,
             state: pacai.core.gamestate.GameState,
@@ -71,7 +120,22 @@ class MyMinimaxLikeAgent(pacai.agents.minimax.MinimaxLikeAgent):
             beta: float,
             ) -> tuple[list[pacai.core.action.Action], float]:
         # *** Your Code Here ***
-        return super().minimax_step_min(state, ply_count, legal_actions, alpha, beta)
+        best_score = float("inf")
+        best_actions = []
+
+        for action in legal_actions:
+            successor = state.generate_successor(action, self.rng)
+            _, score = self.minimax_step(successor, ply_count, alpha, beta)
+            if score < best_score:
+                best_score = score
+                best_actions = [action]
+            elif score == best_score:
+                best_actions.append(action)
+
+            beta = min(beta, best_score)
+            if alpha >= beta:
+                break
+        return best_actions, best_score
 
     def minimax_step_expected_min(self,
             state: pacai.core.gamestate.GameState,
@@ -81,7 +145,17 @@ class MyMinimaxLikeAgent(pacai.agents.minimax.MinimaxLikeAgent):
             beta: float,
             ) -> float:
         # *** Your Code Here ***
-        return super().minimax_step_expected_min(state, ply_count, legal_actions, alpha, beta)
+        if not legal_actions:
+            return self.evaluate_state(state)
+
+        total_score = 0.0
+
+        for action in legal_actions:
+            successor = state.generate_successor(action, self.rng)
+            _, score = self.minimax_step(successor, ply_count, alpha, beta)
+            total_score += score
+
+        return total_score / len(legal_actions)
 
 def better_state_eval(
         state: pacai.core.gamestate.GameState,
@@ -94,7 +168,64 @@ def better_state_eval(
     In this comment, include a description of what you are doing.
 
     *** Your Text Here ***
+    Evaluation function for minimax/alphabeta/expectimax.
     """
 
-    # *** Your Code Here ***
-    return state.score
+    pos = state.get_agent_position(0)
+
+    if pos is None:
+        return -1000000.0
+
+    score = float(state.score)
+
+    foods = state.get_food()
+
+    #
+    # FOOD IS THE TOP PRIORITY.
+    #
+
+    score -= 300.0 * len(foods)
+
+    if foods:
+        nearest_food = min(
+            abs(pos.row - food.row)
+            + abs(pos.col - food.col)
+            for food in foods
+        )
+
+        score += 75.0 / (nearest_food + 1)
+
+    #
+    # SCARED GHOSTS = FOOD.
+    #
+
+    for ghost_pos in state.get_scared_ghost_positions().values():
+
+        distance = (
+            abs(pos.row - ghost_pos.row)
+            + abs(pos.col - ghost_pos.col)
+        )
+
+        score += 50.0 / (distance + 1)
+
+    #
+    # ACTIVE GHOSTS = DANGER.
+    #
+
+    for ghost_pos in state.get_nonscared_ghost_positions().values():
+
+        distance = (
+            abs(pos.row - ghost_pos.row)
+            + abs(pos.col - ghost_pos.col)
+        )
+
+        if distance == 0:
+            return -1000000.0
+
+        elif distance <= 4:
+            score -= 500.0
+
+        # Encourage keeping escape room.
+        score += min(distance, 8) * 10.0
+
+    return score
