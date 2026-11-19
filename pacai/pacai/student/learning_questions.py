@@ -8,7 +8,7 @@ def question_2() -> tuple[float, float]:
     """
 
     discount = 0.9
-    noise = 0.2
+    noise = 0.0
 
     return discount, noise
 
@@ -21,8 +21,9 @@ def question_3a() -> tuple[float, float, float] | None:
     return just `None`.
     """
 
-    discount = 0.9
-    noise = 0.2
+    # lower discount and lower noise
+    discount = 0.2
+    noise = 0.0
     living_reward = 0.0
 
     # If the requested scenario is not possible, return None.
@@ -39,7 +40,8 @@ def question_3b() -> tuple[float, float, float] | None:
     return just `None`.
     """
 
-    discount = 0.9
+    # lower discount and higher noise
+    discount = 0.2
     noise = 0.2
     living_reward = 0.0
 
@@ -57,8 +59,9 @@ def question_3c() -> tuple[float, float, float] | None:
     return just `None`.
     """
 
-    discount = 0.9
-    noise = 0.2
+    # higher discount and lower noise
+    discount = 0.95
+    noise = 0.0
     living_reward = 0.0
 
     # If the requested scenario is not possible, return None.
@@ -75,8 +78,9 @@ def question_3d() -> tuple[float, float, float] | None:
     return just `None`.
     """
 
-    discount = 0.9
-    noise = 0.2
+    # higher discount and higher noise
+    discount = 0.95
+    noise = 0.3
     living_reward = 0.0
 
     # If the requested scenario is not possible, return None.
@@ -93,9 +97,10 @@ def question_3e() -> tuple[float, float, float] | None:
     return just `None`.
     """
 
+    # higher living reward
     discount = 0.9
     noise = 0.2
-    living_reward = 0.0
+    living_reward = 2.0
 
     # If the requested scenario is not possible, return None.
     # return None
@@ -111,13 +116,8 @@ def question_5() -> tuple[float, float]:
     return just `None`.
     """
 
-    exploration_rate = 0.3
-    learning_rate = 0.5
-
     # If the requested scenario is not possible, return None.
-    # return None
-
-    return exploration_rate, learning_rate
+    return None
 
 def main() -> int:
     """ Print the answers to all the questions. """

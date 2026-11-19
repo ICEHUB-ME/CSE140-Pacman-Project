@@ -52,10 +52,32 @@ class ValueIterationAgent(pacai.agents.mdp.MDPAgent):
         and set self.mdp_state_values.
         """
 
-        # *** Your Code Here ***
+        states = self.mdp.get_states()
+        self.mdp_state_values = {mdp_state: 0.0 for mdp_state in states}
+
+        for _ in range(self.iterations):
+            previous_values = self.mdp_state_values
+            new_values = {}
+
+            for mdp_state in states:
+                actions = self.mdp.get_possible_actions(mdp_state)
+                if (len(actions) == 0):
+                    new_values[mdp_state] = 0.0
+                    continue
+
+                new_values[mdp_state] = max(
+                    self._get_qvalue(mdp_state, action, previous_values)
+                    for action in actions
+                )
+
+            self.mdp_state_values = new_values
 
     def get_action(self, state: pacai.core.gamestate.GameState) -> pacai.core.action.Action:
-        mdp_state = self.mdp_state_class(position = state.get_agent_position(), game_state = state)
+        position = state.get_agent_position()
+        if (position is None):
+            return pacai.core.action.STOP
+
+        mdp_state = self.mdp_state_class(position = position, game_state = state)
         return self.get_policy_action(mdp_state, state)
 
     def get_mdp_state_value(self, mdp_state: pacai.core.mdp.MDPStatePosition, game_state: pacai.core.gamestate.GameState) -> float:
@@ -66,12 +88,29 @@ class ValueIterationAgent(pacai.agents.mdp.MDPAgent):
             game_state: pacai.core.gamestate.GameState,
             action: pacai.core.action.Action,
             ) -> float:
-        # *** Your Code Here ***
-        return 0.0
+        return self._get_qvalue(mdp_state, action, self.mdp_state_values)
+
+    def _get_qvalue(self,
+            mdp_state: pacai.core.mdp.MDPStatePosition,
+            action: pacai.core.action.Action,
+            state_values: dict[pacai.core.mdp.MDPStatePosition, float],
+            ) -> float:
+        return sum(
+            transition.probability * (
+                transition.reward + self.discount_rate * state_values.get(transition.state, 0.0)
+            )
+            for transition in self.mdp.get_transitions(mdp_state, action)
+        )
 
     def get_policy_action(self, mdp_state: pacai.core.mdp.MDPStatePosition, game_state: pacai.core.gamestate.GameState) -> pacai.core.action.Action:
-        # *** Your Code Here ***
-        return pacai.core.action.STOP
+        actions = self.mdp.get_possible_actions(mdp_state)
+        if (len(actions) == 0):
+            return pacai.core.action.STOP
+
+        qvalues = [(self.get_qvalue(mdp_state, game_state, action), action) for action in actions]
+        best_value = max(qvalue for (qvalue, _) in qvalues)
+        best_actions = [action for (qvalue, action) in qvalues if qvalue == best_value]
+        return self.rng.choice(best_actions)
 
 class QLearningAgent(pacai.agents.mdp.MDPAgent):
     """
@@ -121,6 +160,9 @@ class QLearningAgent(pacai.agents.mdp.MDPAgent):
         which should have been created by pack_training_info().
         """
 
+        # The game runner wraps packed data in a 'training_info' field between epochs.
+        data = data.get('training_info', data)
+
         for (raw_mdp_state, raw_action, qvalue) in data.get('qvalues', []):
             mdp_state = self.mdp_state_class.from_dict(raw_mdp_state)
             action = pacai.core.action.Action(raw_action)
@@ -128,6 +170,7 @@ class QLearningAgent(pacai.agents.mdp.MDPAgent):
 
     def game_start(self, initial_state: pacai.core.gamestate.GameState) -> None:
         self.last_state = initial_state
+        self.total_rewards = 0.0
 
     def game_complete_full(self,
             final_state: pacai.core.gamestate.GameState,
@@ -183,7 +226,7 @@ class QLearningAgent(pacai.agents.mdp.MDPAgent):
             # The agent was not on the board the last turn. Did they respawn?
             return
 
-        new_position = self.last_positions[-1]
+        new_position = new_state.get_agent_position(self.agent_index)
 
         self.update_qvalue(score_delta, last_action,
             old_state, new_state,
@@ -194,16 +237,38 @@ class QLearningAgent(pacai.agents.mdp.MDPAgent):
         # This code should not change and anways be the first thing done in this method.
         self.update(state)
 
-        # *** Your Code Here ***
-        return pacai.core.action.STOP
+        position = state.get_agent_position()
+        if (position is None):
+            return pacai.core.action.STOP
+
+        mdp_state = self.mdp_state_class(position = position, game_state = state)
+        training_exploration_rate = self.exploration_rate / (1.0 + (0.01 * self.training_epoch))
+        if (self.training and (self.rng.random() < training_exploration_rate)):
+            legal_actions = state.get_legal_actions(position)
+            if (len(legal_actions) > 0):
+                return self.rng.choice(legal_actions)
+
+        return self.get_policy_action(mdp_state, state)
 
     def get_mdp_state_value(self, mdp_state: pacai.core.mdp.MDPStatePosition, game_state: pacai.core.gamestate.GameState) -> float:
-        # *** Your Code Here ***
-        return 0.0
+        if (game_state.game_over or mdp_state.is_terminal()):
+            return 0.0
+
+        legal_actions = game_state.get_legal_actions(mdp_state.position)
+        if (len(legal_actions) == 0):
+            return 0.0
+
+        return max(self.get_qvalue(mdp_state, game_state, action) for action in legal_actions)
 
     def get_policy_action(self, mdp_state: pacai.core.mdp.MDPStatePosition, game_state: pacai.core.gamestate.GameState) -> pacai.core.action.Action:
-        # *** Your Code Here ***
-        return pacai.core.action.STOP
+        legal_actions = game_state.get_legal_actions(mdp_state.position)
+        if (len(legal_actions) == 0):
+            return pacai.core.action.STOP
+
+        qvalues = [(self.get_qvalue(mdp_state, game_state, action), action) for action in legal_actions]
+        best_value = max(qvalue for (qvalue, _) in qvalues)
+        best_actions = [action for (qvalue, action) in qvalues if qvalue == best_value]
+        return self.rng.choice(best_actions)
 
     def get_qvalue(self,
             mdp_state: pacai.core.mdp.MDPStatePosition,
@@ -224,7 +289,20 @@ class QLearningAgent(pacai.agents.mdp.MDPAgent):
         (i.e., we are training and all the required information is available).
         """
 
-        # *** Your Code Here ***
+        if (old_position is None):
+            return
+
+        old_mdp_state = self.mdp_state_class(position = old_position, game_state = old_game_state)
+        old_qvalue = self.get_qvalue(old_mdp_state, old_game_state, action)
+
+        next_value = 0.0
+        if ((new_position is not None) and (not new_game_state.game_over)):
+            new_mdp_state = self.mdp_state_class(position = new_position, game_state = new_game_state)
+            next_value = self.get_mdp_state_value(new_mdp_state, new_game_state)
+
+        target = reward + self.discount_rate * next_value
+        updated_qvalue = old_qvalue + self.learning_rate * (target - old_qvalue)
+        self.qvalues[(old_mdp_state, action)] = updated_qvalue
 
 class QLearningUserInputAgent(QLearningAgent):
     """
@@ -293,6 +371,8 @@ class ApproximateQLearningAgent(QLearningAgent):
         }
 
     def unpack_training_info(self, data: dict[str, typing.Any]) -> None:
+        # The game runner wraps packed data in a 'training_info' field between epochs.
+        data = data.get('training_info', data)
         self.weights = pacai.core.features.WeightDict(data.get('weights', {}))
 
     def game_complete(self, final_state: pacai.core.gamestate.GameState) -> None:
@@ -311,8 +391,8 @@ class ApproximateQLearningAgent(QLearningAgent):
         where `⋅` is the dot product operator.
         """
 
-        # *** Your Code Here ***
-        return 0.0
+        features = self.feature_extractor_func(game_state, action, agent = self)
+        return sum(self.weights.get(feature, 0.0) * value for (feature, value) in features.items())
 
     def update_qvalue(self,
             reward: float,
@@ -320,5 +400,17 @@ class ApproximateQLearningAgent(QLearningAgent):
             old_game_state: pacai.core.gamestate.GameState, new_game_state: pacai.core.gamestate.GameState,
             old_position: pacai.core.board.Position | None, new_position: pacai.core.board.Position | None,
             ) -> None:
-        # *** Your Code Here ***
-        pass
+        if (old_position is None):
+            return
+
+        old_features = self.feature_extractor_func(old_game_state, action, agent = self)
+        old_qvalue = sum(self.weights.get(feature, 0.0) * value for (feature, value) in old_features.items())
+
+        next_value = 0.0
+        if ((new_position is not None) and (not new_game_state.game_over)):
+            new_mdp_state = self.mdp_state_class(position = new_position, game_state = new_game_state)
+            next_value = self.get_mdp_state_value(new_mdp_state, new_game_state)
+
+        difference = reward + self.discount_rate * next_value - old_qvalue
+        for (feature, value) in old_features.items():
+            self.weights[feature] = self.weights.get(feature, 0.0) + self.learning_rate * difference * value
