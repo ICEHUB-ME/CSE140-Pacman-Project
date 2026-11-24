@@ -61,20 +61,10 @@ def create_team() -> list[pacai.core.agentinfo.AgentInfo]:
     return [
         pacai.core.agentinfo.AgentInfo(
             name = f"{__name__}.OffensiveCaptureAgent",
-            role = "offense",
-            row_region = 0,
-            training = True,
-            learning_rate = 0.2,
-            discount_rate = 0.9,
-            exploration_rate = 0.2),
+            row_region = 0),
         pacai.core.agentinfo.AgentInfo(
             name = f"{__name__}.OffensiveCaptureAgent",
-            role = "offense",
-            row_region = 1,
-            training = True,
-            learning_rate = 0.2,
-            discount_rate = 0.9,
-            exploration_rate = 0.2),
+            row_region = 1),
     ]
 
 
@@ -94,6 +84,7 @@ class _CaptureAgent(pacai.student.learning.ApproximateQLearningAgent):
         self._beliefs: dict[int, dict[pacai.core.board.Position, float]] = {}
         self._belief_confidence: dict[int, float] = {}
         self._last_home_food: set[pacai.core.board.Position] = set()
+        self._entry_points: list[pacai.core.board.Position] = []
 
     def game_start(self, initial_state: pacai.core.gamestate.GameState) -> None:
         self._current_board_width = initial_state.board.width
@@ -124,6 +115,18 @@ class _CaptureAgent(pacai.student.learning.ApproximateQLearningAgent):
             food for food in initial_state.board.get_marker_positions(pacai.pacman.board.MARKER_PELLET)
             if self._is_home_side(food)
         }
+        # Each point is the first tile on the opponent's side at a usable
+        # horizontal midline crossing. Agents can then approach via different
+        # corridors instead of funneling through the same opening.
+        midline = int(initial_state.board.width / 2)
+        for row in range(initial_state.board.height):
+            home_col = midline - 1 if self.agent_index % 2 == 0 else midline
+            away_col = midline if self.agent_index % 2 == 0 else midline - 1
+            home = pacai.core.board.Position(row, home_col)
+            away = pacai.core.board.Position(row, away_col)
+            if (not initial_state.board.is_wall(home)
+                    and not initial_state.board.is_wall(away)):
+                self._entry_points.append(away)
         self._update_opponent_beliefs(
             typing.cast(pacai.capture.gamestate.GameState, initial_state),
             use_food_evidence = False)
@@ -507,6 +510,14 @@ class OffensiveCaptureAgent(_CaptureAgent):
                 return self._select_action(state, scores)
 
         food_positions = state.get_food(agent_index = self.agent_index)
+        final_food_run = state.food_count(agent_index = self.agent_index) == 1
+        if (self._row_region in {0, 1}):
+            region_food = {
+                food for food in food_positions
+                if int(food.row >= (state.board.height / 2)) == self._row_region
+            }
+            if (region_food):
+                food_positions = region_food
         if (not food_positions):
             return legal_actions[0]
 
@@ -516,6 +527,7 @@ class OffensiveCaptureAgent(_CaptureAgent):
                     agent_index = self.agent_index).items()
             if state.is_ghost(opponent_index)
         }
+        scared_ghosts = state.get_scared_opponent_positions(agent_index = self.agent_index)
 
         def target_cost(food: pacai.core.board.Position) -> float:
             cost = self._distance(position, food)
@@ -533,11 +545,50 @@ class OffensiveCaptureAgent(_CaptureAgent):
             return cost
 
         nearest_food = min(food_positions, key = target_cost)
-        if ((self._food_target not in food_positions)
-                or (target_cost(nearest_food) + FOOD_TARGET_SWITCH_MARGIN < target_cost(
+        if (final_food_run):
+            # The final pellet ends the game, so winning is worth accepting a
+            # likely capture. Do not preserve the agent at the cost of the win.
+            nearest_food = min(food_positions, key = lambda food: self._distance(position, food))
+            self._food_target = nearest_food
+        elif ((self._food_target not in food_positions)
+                or (target_cost(nearest_food) + 3 < target_cost(
                     typing.cast(pacai.core.board.Position, self._food_target)))):
             self._food_target = nearest_food
         target = typing.cast(pacai.core.board.Position, self._food_target)
+
+        # Pick a reachable midline opening for this food target. Include the
+        # approach distance, so the route naturally uses the best boundary gap.
+        entry = None
+        if (self._is_home_side(position) and self._entry_points):
+            ally_positions = state.get_ally_positions(agent_index = self.agent_index)
+
+            def entry_cost(point: pacai.core.board.Position) -> float:
+                cost = self._distance(position, point) + self._distance(point, target)
+
+                # Prefer the agent's assigned north/south lane, while allowing
+                # it to switch lanes if defenders are covering that approach.
+                if (self._row_region in {0, 1}
+                        and int(point.row >= (state.board.height / 2)) != self._row_region):
+                    cost += 6.0
+
+                # Avoid openings near visible, dangerous defenders. This makes
+                # the route adapt when the other team stacks a boundary gap.
+                for ghost_position in dangerous_ghosts.values():
+                    ghost_distance = self._distance(point, ghost_position)
+                    if (ghost_distance <= 5):
+                        cost += 3.0 * (6 - ghost_distance)
+
+                # Avoid routing both attackers through the same nearby entry
+                # when the ally is already closer to that opening.
+                for ally_position in ally_positions.values():
+                    ally_distance = self._distance(ally_position, point)
+                    if (ally_distance + 2 < self._distance(position, point)):
+                        cost += max(0.0, 8.0 - ally_distance) * 1.5
+
+                cost += 5.0 * self._hidden_ghost_risk(state, point)
+                return cost
+
+            entry = min(self._entry_points, key = entry_cost)
 
         capsule_positions = {
             capsule for capsule in state.board.get_marker_positions(pacai.pacman.board.MARKER_CAPSULE)
@@ -547,9 +598,21 @@ class OffensiveCaptureAgent(_CaptureAgent):
             (self._distance(position, ghost) for ghost in dangerous_ghosts.values()),
             default = GHOST_DISTANCE_FALLBACK)
 
+        # Retreat when a nearby defender threatens the route and home is still
+        # reachable. This is a tactical heuristic, not a guarantee against
+        # opponents that can intercept or hidden defenders.
+        home_tiles = [point for point in self._distances
+            if self._is_home_side(point)]
+        return_target = min(home_tiles, key = lambda point: self._distance(position, point)) if home_tiles else None
+        retreat = (not final_food_run
+            and not self._is_home_side(position)
+            and closest_ghost_distance <= 4
+            and return_target is not None
+            and not state.is_scared(self.agent_index))
+
         # Treat capsules as tactical objectives when a defender is approaching.
         # Prefer capsules that are reachable soon and not already guarded by a ghost.
-        if ((closest_ghost_distance <= CAPSULE_GHOST_ALERT_DISTANCE) and capsule_positions):
+        if (not final_food_run and (closest_ghost_distance <= 8) and capsule_positions):
             def capsule_cost(capsule: pacai.core.board.Position) -> float:
                 ghost_distance = min(
                     (self._distance(capsule, ghost) for ghost in dangerous_ghosts.values()),
@@ -564,15 +627,29 @@ class OffensiveCaptureAgent(_CaptureAgent):
         scores: dict[pacai.core.action.Action, float] = {}
         for action in legal_actions:
             next_position = position.apply_action(action)
-            distance_to_target = self._distance(next_position, target)
-            score = -TARGET_DISTANCE_WEIGHT * distance_to_target
+            if (retreat and return_target is not None):
+                distance_to_target = self._distance(next_position, return_target)
+            elif (entry is not None and self._is_home_side(next_position)):
+                distance_to_target = (self._distance(next_position, entry)
+                    + self._distance(entry, target))
+            else:
+                distance_to_target = self._distance(next_position, target)
+            score = -2.0 * distance_to_target
 
             if (next_position in food_positions):
-                score += FOOD_REWARD
+                score += 100000.0 if final_food_run else 16.0
             if (next_position in capsule_positions):
                 score += CAPSULE_REWARD
 
+            # Keep the capsule's protection active. Eating a scared defender
+            # removes it from the board and resets its timer, so avoid stepping
+            # onto one while continuing to prioritize food.
+            if (next_position in scared_ghosts.values()):
+                score -= 200.0
+
             for ghost_position in dangerous_ghosts.values():
+                if (final_food_run):
+                    continue
                 if (self._is_home_side(next_position)):
                     continue
 
@@ -582,8 +659,8 @@ class OffensiveCaptureAgent(_CaptureAgent):
                         score -= penalty
                         break
 
-            if (not self._is_home_side(next_position)):
-                score -= HIDDEN_GHOST_SCORE_PENALTY * self._hidden_ghost_risk(state, next_position)
+            if (not final_food_run and not self._is_home_side(next_position)):
+                score -= 100.0 * self._hidden_ghost_risk(state, next_position)
 
             scores[action] = score
 
@@ -645,3 +722,4 @@ class DefensiveCaptureAgent(_CaptureAgent):
 
         self._avoid_or_draw_threat(state, position, legal_actions, scores)
         return self._select_action(state, scores)
+"""
