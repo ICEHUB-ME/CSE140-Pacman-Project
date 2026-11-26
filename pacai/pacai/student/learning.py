@@ -221,7 +221,9 @@ class QLearningAgent(pacai.agents.mdp.MDPAgent):
         if (not self.training):
             return
 
-        old_position = old_state.get_agent_position()
+        # Completion callbacks can run after the game clears the active-agent
+        # index. Always query the learner's tracked agent explicitly.
+        old_position = old_state.get_agent_position(self.agent_index)
         if (old_position is None):
             # The agent was not on the board the last turn. Did they respawn?
             return
