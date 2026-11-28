@@ -202,7 +202,9 @@ class QLearningAgent(pacai.agents.mdp.MDPAgent):
         # Get the most recent action.
         last_action = new_state.get_last_agent_action(self.agent_index)
         if (last_action is None):
-            # No action has been taken yet, don't update.
+            # Establish this agent's first decision state, even when another
+            # agent had the first move of the game.
+            self.last_state = new_state.copy()
             return
 
         # Update the last seen state.

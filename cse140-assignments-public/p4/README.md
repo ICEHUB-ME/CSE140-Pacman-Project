@@ -59,7 +59,7 @@ For instructions on submission,
 refer back to the [P0 README](../p0/README.md).
 for example, you may submit with the command:
 ```sh
-python3 -m autograder.run.submit pacai/student/capture.py pacai/student/capture-team.txt
+python3 -m autograder.run.submit ../../pacai/pacai/student/capture.py ../../pacai/pacai/student/capture-team.txt
 ```
 
 The most recent submission of any team member before the tournament begins will become the whole team's agent and will represent your team in the tournament.
@@ -87,7 +87,6 @@ Through this report we expect you to demonstrate your ability to constructively 
 ## Points & Teams
 A portion of your grade will be based on performance against the following staff agents:
  - `staff_baseline`
- - `staff_SlugRush`
  - `staff_PhantomSlug`
 
 Points are also awarded as follows:
